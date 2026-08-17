@@ -1,0 +1,29 @@
+name: Deploy production fixture
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - id: deploy
+        uses: AndreBaltazar8/micro-action@27377b31cfc2737f9f0873d411fc4daf7dffab60 # v1.0.0
+        with:
+          path: test/fixture
+          environment: production
+      - name: Verify deployment outputs
+        env:
+          MICRO_URL: ${{ steps.deploy.outputs.url }}
+          MICRO_PROJECT_ID: ${{ steps.deploy.outputs.project-id }}
+          MICRO_DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment-id }}
+        run: |
+          test "$MICRO_URL" = "https://action-e2e-20260817.micro.do"
+          test -n "$MICRO_PROJECT_ID"
+          test -n "$MICRO_DEPLOYMENT_ID"
