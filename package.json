@@ -1,0 +1,15 @@
+{
+  "name": "micro-action",
+  "version": "0.1.0",
+  "private": true,
+  "description": "First-party OIDC deployment action for micro.do",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node --check src/index.js && node --check dist/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

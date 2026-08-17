@@ -1,0 +1,41 @@
+name: Deploy a Micro
+description: Build and deploy a Micro with GitHub OIDC and no stored deployment secret.
+author: Andre Baltazar
+branding:
+  icon: upload-cloud
+  color: orange
+inputs:
+  path:
+    description: Project directory below the checked-out repository.
+    required: false
+    default: .
+  environment:
+    description: Expected GitHub environment claim; configure the same environment on the job.
+    required: false
+    default: production
+  cli-version:
+    description: Compatible micro CLI release to install and verify.
+    required: false
+    default: 0.4.0
+  dry-run:
+    description: Build and validate locally without requesting OIDC or deploying.
+    required: false
+    default: "false"
+  accept-price-changes:
+    description: Explicitly permit declared product price or currency changes.
+    required: false
+    default: "false"
+outputs:
+  url:
+    description: Live Micro URL.
+  project-id:
+    description: Stable Micro project ID.
+  deployment-id:
+    description: Immutable deployment ID.
+  bundle-sha256:
+    description: Normalized bundle digest.
+  source-sha256:
+    description: Source snapshot digest.
+runs:
+  using: node24
+  main: dist/index.js
