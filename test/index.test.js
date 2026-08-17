@@ -6,7 +6,20 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { parseDeployment, resolveProject, unverifiedClaims } = require("../src/index.js");
+const { booleanInput, input, parseDeployment, resolveProject, unverifiedClaims } = require("../src/index.js");
+
+test("reads GitHub's exact hyphenated input environment names", () => {
+  process.env["INPUT_DRY-RUN"] = "true";
+  process.env.INPUT_CLI_VERSION = "0.4.0";
+  try {
+    assert.equal(input("dry-run"), "true");
+    assert.equal(booleanInput("dry-run"), true);
+    assert.equal(input("cli-version"), "0.4.0");
+  } finally {
+    delete process.env["INPUT_DRY-RUN"];
+    delete process.env.INPUT_CLI_VERSION;
+  }
+});
 
 test("project path cannot escape the workspace", () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "micro-action-test-"));

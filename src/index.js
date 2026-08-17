@@ -14,7 +14,9 @@ const CLI_CHECKSUMS = {
 };
 
 function input(name, fallback = "") {
-  return process.env[`INPUT_${name.replaceAll("-", "_").toUpperCase()}`] || fallback;
+  const githubName = `INPUT_${name.toUpperCase()}`;
+  const portableName = githubName.replaceAll("-", "_");
+  return process.env[githubName] || process.env[portableName] || fallback;
 }
 
 function booleanInput(name) {
@@ -180,6 +182,7 @@ if (require.main === module) {
 
 module.exports = {
   booleanInput,
+  input,
   parseDeployment,
   resolveProject,
   unverifiedClaims,
