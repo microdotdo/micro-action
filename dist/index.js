@@ -49,7 +49,7 @@ function resolveProject(workspace, requested) {
 }
 
 async function boundedDownload(url) {
-  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.2" } });
+  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.3" } });
   if (!response.ok) throw new Error(`download failed with HTTP ${response.status}`);
   const length = Number(response.headers.get("content-length") || 0);
   if (length > MAX_DOWNLOAD_BYTES) throw new Error("download exceeds 20 MiB");
@@ -154,7 +154,7 @@ async function verifyDeployment(url, attempts = 5) {
       const response = await fetch(url, {
         method: "GET",
         redirect: "manual",
-        headers: { "user-agent": "micro-action/1.2 live-verification" },
+        headers: { "user-agent": "micro-action/1.3 live-verification" },
         signal: AbortSignal.timeout(10000),
       });
       if (response.status >= 200 && response.status < 500) {

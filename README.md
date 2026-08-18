@@ -54,7 +54,10 @@ price or currency changes also fail closed unless
 `accept-price-changes: "true"` is explicitly set. Beginning real Stripe charges
 is a separate decision and requires `accept-live-products: "true"`.
 
-Action 1.2 installs the checksum-pinned Micro CLI 0.8.0. Its step summary
+Action 1.3 installs the checksum-pinned Micro CLI 0.8.0. For projects with an
+`app.ab` server, it also builds the exact Abla compiler revision used to release
+that CLI inside a pinned Nix environment; static-only projects skip that work.
+Its step summary
 separately reports the local build, accepted bundle upload, activated deployment,
 and retried live-route HTTP verification. A reachable private route may report
 HTTP 401 and a site whose root intentionally does not exist may report 404;

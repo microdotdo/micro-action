@@ -32,16 +32,70 @@ inputs:
 outputs:
   url:
     description: Live Micro URL.
+    value: ${{ steps.deploy.outputs.url }}
   project-id:
     description: Stable Micro project ID.
+    value: ${{ steps.deploy.outputs.project-id }}
   deployment-id:
     description: Immutable deployment ID.
+    value: ${{ steps.deploy.outputs.deployment-id }}
   bundle-sha256:
     description: Normalized bundle digest.
+    value: ${{ steps.deploy.outputs.bundle-sha256 }}
   source-sha256:
     description: Source snapshot digest.
+    value: ${{ steps.deploy.outputs.source-sha256 }}
   verification-status:
     description: Live project-route verification result.
+    value: ${{ steps.deploy.outputs.verification-status }}
 runs:
-  using: node24
-  main: dist/index.js
+  using: composite
+  steps:
+    - id: project
+      name: Inspect the Micro source tree
+      shell: bash
+      env:
+        MICRO_PROJECT_PATH: ${{ inputs.path }}
+      run: |
+        node <<'NODE'
+        const fs = require("node:fs");
+        const path = require("node:path");
+        const root = fs.realpathSync(process.env.GITHUB_WORKSPACE);
+        const project = fs.realpathSync(path.resolve(root, process.env.MICRO_PROJECT_PATH));
+        if (project !== root && !project.startsWith(`${root}${path.sep}`)) {
+          throw new Error("path must stay inside GITHUB_WORKSPACE");
+        }
+        const requiresAbla = fs.existsSync(path.join(project, "app.ab"));
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, `requires-abla=${requiresAbla}\n`);
+        NODE
+    - name: Install the Abla build environment
+      if: steps.project.outputs.requires-abla == 'true'
+      uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+    - name: Build the pinned Abla compiler
+      if: steps.project.outputs.requires-abla == 'true'
+      shell: bash
+      env:
+        ABLAC_COMMIT: 946d112a649c4f4fc6f4e156251c10c2d2095985
+      run: |
+        git clone --filter=blob:none --no-checkout https://github.com/AndreBaltazar8/ablac "$RUNNER_TEMP/ablac"
+        git -C "$RUNNER_TEMP/ablac" checkout "$ABLAC_COMMIT"
+        nix-shell "$RUNNER_TEMP/ablac/shell.nix" --run "make -C '$RUNNER_TEMP/ablac'"
+    - id: deploy
+      name: Build, deploy, and verify the Micro
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        INPUT_CLI_VERSION: ${{ inputs.cli-version }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+        INPUT_ACCEPT_PRICE_CHANGES: ${{ inputs.accept-price-changes }}
+        INPUT_ACCEPT_LIVE_PRODUCTS: ${{ inputs.accept-live-products }}
+        MICRO_REQUIRES_ABLA: ${{ steps.project.outputs.requires-abla }}
+      run: |
+        if [ "$MICRO_REQUIRES_ABLA" = true ]; then
+          export MICRO_ABLAC="$RUNNER_TEMP/ablac/build/ablac"
+          export ABLA_SYSROOT="$RUNNER_TEMP/ablac"
+          nix-shell "$RUNNER_TEMP/ablac/shell.nix" --run "node '$GITHUB_ACTION_PATH/dist/index.js'"
+        else
+          node "$GITHUB_ACTION_PATH/dist/index.js"
+        fi
