@@ -10,8 +10,7 @@ const API_ORIGIN = "https://micro.do";
 const OIDC_AUDIENCE = "https://micro.do/actions";
 const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const CLI_CHECKSUMS = {
-  "0.4.0": "dbb6d05fd13bbf66d0f50b5278154fbd4b322d243a6369053bca545962784643",
-  "0.5.0": "32c0c9461f083a34afebf638c5592a5c739b3e021215c36f68a2088dddcfeb94",
+  "0.7.3": "af46fff76beac3cffc9b8f7c8e642e6da787fdd005bed38ad551cc8724baab92",
 };
 
 function input(name, fallback = "") {
@@ -48,7 +47,7 @@ function resolveProject(workspace, requested) {
 }
 
 async function boundedDownload(url) {
-  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.0" } });
+  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.1" } });
   if (!response.ok) throw new Error(`download failed with HTTP ${response.status}`);
   const length = Number(response.headers.get("content-length") || 0);
   if (length > MAX_DOWNLOAD_BYTES) throw new Error("download exceeds 20 MiB");
@@ -131,15 +130,57 @@ function parseDeployment(stdout) {
   for (const field of ["url", "project_id", "deployment_id", "bundle_sha256", "source_sha256"]) {
     if (typeof value[field] !== "string" || !value[field]) throw new Error(`micro CLI omitted ${field}`);
   }
+  const target = new URL(value.url);
+  if (target.protocol !== "https:" || !target.hostname.endsWith(".micro.do") ||
+      target.pathname !== "/" || target.search || target.hash) {
+    throw new Error("micro CLI returned an invalid project URL");
+  }
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  if (!uuid.test(value.project_id) || !uuid.test(value.deployment_id)) {
+    throw new Error("micro CLI returned an invalid deployment identity");
+  }
+  if (!/^[a-f0-9]{64}$/.test(value.bundle_sha256) || !/^[a-f0-9]{64}$/.test(value.source_sha256)) {
+    throw new Error("micro CLI returned an invalid deployment digest");
+  }
   return value;
 }
 
-function summary(deployment, dryRun) {
+async function verifyDeployment(url, attempts = 5) {
+  let lastError = "live route did not respond";
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        redirect: "manual",
+        headers: { "user-agent": "micro-action/1.1 live-verification" },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (response.status >= 200 && response.status < 500) {
+        return { status: "reachable", httpStatus: response.status, attempts: attempt };
+      }
+      lastError = `live route returned HTTP ${response.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  throw new Error(`deployment activated, but live verification failed: ${lastError}`);
+}
+
+function summary(deployment, verification, dryRun) {
   const target = process.env.GITHUB_STEP_SUMMARY;
   if (!target) return;
   const lines = dryRun
-    ? ["## Micro build", "", "The project built and validated. No deployment was requested."]
-    : ["## Micro deployment", "", `- URL: ${deployment.url}`, `- Deployment: \`${deployment.deployment_id}\``, `- Source: \`${deployment.source_sha256}\``];
+    ? ["## Micro build", "", "- Build: validated", "- Upload: not requested", "- Activation: not requested", "- Live route: not requested"]
+    : [
+        "## Micro deployment", "",
+        `- Build: validated by the checksum-pinned Micro CLI`,
+        `- Upload: accepted as bundle \`${deployment.bundle_sha256}\``,
+        `- Activation: deployment \`${deployment.deployment_id}\``,
+        `- Live route: HTTP ${verification.httpStatus} after ${verification.attempts} attempt${verification.attempts === 1 ? "" : "s"}`,
+        `- URL: ${deployment.url}`,
+        `- Source: \`${deployment.source_sha256}\``,
+      ];
   fs.appendFileSync(target, `${lines.join("\n")}\n`, "utf8");
 }
 
@@ -147,10 +188,10 @@ async function main() {
   const workspace = process.env.GITHUB_WORKSPACE;
   if (!workspace) throw new Error("GITHUB_WORKSPACE is unavailable");
   const project = resolveProject(workspace, input("path", "."));
-  const cli = await installCli(input("cli-version", "0.5.0"));
+  const cli = await installCli(input("cli-version", "0.7.3"));
   if (booleanInput("dry-run")) {
     runCli(cli, ["build", "--json"], project, {});
-    summary({}, true);
+    summary({}, {}, true);
     return;
   }
   const oidc = await githubOidcToken();
@@ -163,15 +204,18 @@ async function main() {
     MICRO_API: API_ORIGIN,
     MICRO_GITHUB_OIDC_TOKEN: oidc,
     MICRO_ACCEPT_PRICE_CHANGES: booleanInput("accept-price-changes") ? "true" : "false",
+    MICRO_ACCEPT_LIVE_PRODUCTS: booleanInput("accept-live-products") ? "true" : "false",
   });
   const result = parseDeployment(deployed.stdout);
+  const verification = await verifyDeployment(result.url);
   setOutput("url", result.url);
   setOutput("project-id", result.project_id);
   setOutput("deployment-id", result.deployment_id);
   setOutput("bundle-sha256", result.bundle_sha256);
   setOutput("source-sha256", result.source_sha256);
-  summary(result, false);
-  command("notice", `Deployed ${result.url}`);
+  setOutput("verification-status", `reachable:http-${verification.httpStatus}`);
+  summary(result, verification, false);
+  command("notice", `Deployed and verified ${result.url} (HTTP ${verification.httpStatus})`);
 }
 
 if (require.main === module) {
@@ -187,4 +231,5 @@ module.exports = {
   parseDeployment,
   resolveProject,
   unverifiedClaims,
+  verifyDeployment,
 };

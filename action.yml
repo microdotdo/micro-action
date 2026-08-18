@@ -16,13 +16,17 @@ inputs:
   cli-version:
     description: Compatible micro CLI release to install and verify.
     required: false
-    default: 0.5.0
+    default: 0.7.3
   dry-run:
     description: Build and validate locally without requesting OIDC or deploying.
     required: false
     default: "false"
   accept-price-changes:
     description: Explicitly permit declared product price or currency changes.
+    required: false
+    default: "false"
+  accept-live-products:
+    description: Explicitly permit declared products to begin creating real Stripe charges.
     required: false
     default: "false"
 outputs:
@@ -36,6 +40,8 @@ outputs:
     description: Normalized bundle digest.
   source-sha256:
     description: Source snapshot digest.
+  verification-status:
+    description: Live project-route verification result.
 runs:
   using: node24
   main: dist/index.js

@@ -51,7 +51,16 @@ slug; the first successful deployment does both atomically.
 
 `pull_request` and `pull_request_target` identities cannot deploy. Product
 price or currency changes also fail closed unless
-`accept-price-changes: "true"` is explicitly set.
+`accept-price-changes: "true"` is explicitly set. Beginning real Stripe charges
+is a separate decision and requires `accept-live-products: "true"`.
+
+Action 1.1 installs the checksum-pinned Micro CLI 0.7.3. Its step summary
+separately reports the local build, accepted bundle upload, activated deployment,
+and retried live-route HTTP verification. A reachable private route may report
+HTTP 401 and a site whose root intentionally does not exist may report 404;
+both prove that the activated project route is serving without exposing a
+credential. Network failures and HTTP 5xx responses fail the Action after five
+bounded attempts.
 
 ## Development
 

@@ -23,7 +23,9 @@ jobs:
           MICRO_URL: ${{ steps.deploy.outputs.url }}
           MICRO_PROJECT_ID: ${{ steps.deploy.outputs.project-id }}
           MICRO_DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment-id }}
+          MICRO_VERIFICATION_STATUS: ${{ steps.deploy.outputs.verification-status }}
         run: |
           test "$MICRO_URL" = "https://action-e2e-20260817.micro.do"
           test -n "$MICRO_PROJECT_ID"
           test -n "$MICRO_DEPLOYMENT_ID"
+          test "${MICRO_VERIFICATION_STATUS%%:*}" = "reachable"
