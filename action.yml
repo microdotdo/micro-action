@@ -16,7 +16,7 @@ inputs:
   cli-version:
     description: Compatible micro CLI release to install and verify.
     required: false
-    default: 0.8.0
+    default: 0.8.1
   dry-run:
     description: Build and validate locally without requesting OIDC or deploying.
     required: false

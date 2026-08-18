@@ -12,6 +12,7 @@ const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const CLI_CHECKSUMS = {
   "0.7.3": "af46fff76beac3cffc9b8f7c8e642e6da787fdd005bed38ad551cc8724baab92",
   "0.8.0": "5aa9d98b2d3aa7e5e09b8cd38074ac0eddb002940ebbc0de9dc5d1a34c1c450c",
+  "0.8.1": "105f7737d40272832e5d5a3437e4f1dee13b7435e40cec54a5c5d4caa7ece60f",
 };
 
 function input(name, fallback = "") {
@@ -24,6 +25,16 @@ function booleanInput(name) {
   const value = input(name, "false").toLowerCase();
   if (value !== "true" && value !== "false") throw new Error(`${name} must be true or false`);
   return value === "true";
+}
+
+function projectBuildEnvironment() {
+  return {
+    ACTIONS_ID_TOKEN_REQUEST_TOKEN: "",
+    ACTIONS_ID_TOKEN_REQUEST_URL: "",
+    GITHUB_TOKEN: "",
+    GH_TOKEN: "",
+    MICRO_GITHUB_OIDC_TOKEN: "",
+  };
 }
 
 function command(name, value) {
@@ -189,9 +200,9 @@ async function main() {
   const workspace = process.env.GITHUB_WORKSPACE;
   if (!workspace) throw new Error("GITHUB_WORKSPACE is unavailable");
   const project = resolveProject(workspace, input("path", "."));
-  const cli = await installCli(input("cli-version", "0.8.0"));
+  const cli = await installCli(input("cli-version", "0.8.1"));
+  runCli(cli, ["build", "--json"], project, projectBuildEnvironment());
   if (booleanInput("dry-run")) {
-    runCli(cli, ["build", "--json"], project, {});
     summary({}, {}, true);
     return;
   }
@@ -201,7 +212,7 @@ async function main() {
   if (expectedEnvironment && claims.environment !== expectedEnvironment) {
     throw new Error(`GitHub OIDC environment is ${claims.environment || "absent"}; expected ${expectedEnvironment}`);
   }
-  const deployed = runCli(cli, ["deploy", "--github", "--json"], project, {
+  const deployed = runCli(cli, ["deploy", "--github", "--prebuilt", "--json"], project, {
     MICRO_API: API_ORIGIN,
     MICRO_GITHUB_OIDC_TOKEN: oidc,
     MICRO_ACCEPT_PRICE_CHANGES: booleanInput("accept-price-changes") ? "true" : "false",
@@ -230,6 +241,7 @@ module.exports = {
   booleanInput,
   input,
   parseDeployment,
+  projectBuildEnvironment,
   resolveProject,
   unverifiedClaims,
   verifyDeployment,

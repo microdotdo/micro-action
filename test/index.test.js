@@ -6,15 +6,15 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { booleanInput, input, parseDeployment, resolveProject, unverifiedClaims, verifyDeployment } = require("../src/index.js");
+const { booleanInput, input, parseDeployment, projectBuildEnvironment, resolveProject, unverifiedClaims, verifyDeployment } = require("../src/index.js");
 
 test("reads GitHub's exact hyphenated input environment names", () => {
   process.env["INPUT_DRY-RUN"] = "true";
-  process.env.INPUT_CLI_VERSION = "0.8.0";
+  process.env.INPUT_CLI_VERSION = "0.8.1";
   try {
     assert.equal(input("dry-run"), "true");
     assert.equal(booleanInput("dry-run"), true);
-    assert.equal(input("cli-version"), "0.8.0");
+    assert.equal(input("cli-version"), "0.8.1");
   } finally {
     delete process.env["INPUT_DRY-RUN"];
     delete process.env.INPUT_CLI_VERSION;
@@ -26,6 +26,16 @@ test("project path cannot escape the workspace", () => {
   fs.mkdirSync(path.join(workspace, "site"));
   assert.equal(resolveProject(workspace, "site"), path.join(workspace, "site"));
   assert.throws(() => resolveProject(workspace, ".."), /inside GITHUB_WORKSPACE/);
+});
+
+test("project compilation receives no GitHub or Micro deployment authority", () => {
+  assert.deepEqual(projectBuildEnvironment(), {
+    ACTIONS_ID_TOKEN_REQUEST_TOKEN: "",
+    ACTIONS_ID_TOKEN_REQUEST_URL: "",
+    GITHUB_TOKEN: "",
+    GH_TOKEN: "",
+    MICRO_GITHUB_OIDC_TOKEN: "",
+  });
 });
 
 test("deployment output requires all immutable facts", () => {
