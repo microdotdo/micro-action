@@ -12,6 +12,7 @@ const OIDC_AUDIENCE = "https://micro.do/actions";
 const MAX_DOWNLOAD_BYTES = 20 * 1024 * 1024;
 const CLI_CHECKSUMS = {
   "0.4.0": "dbb6d05fd13bbf66d0f50b5278154fbd4b322d243a6369053bca545962784643",
+  "0.5.0": "32c0c9461f083a34afebf638c5592a5c739b3e021215c36f68a2088dddcfeb94",
 };
 
 function input(name, fallback = "") {
@@ -48,7 +49,7 @@ function resolveProject(workspace, requested) {
 }
 
 async function boundedDownload(url) {
-  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/0.1" } });
+  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.0" } });
   if (!response.ok) throw new Error(`download failed with HTTP ${response.status}`);
   const length = Number(response.headers.get("content-length") || 0);
   if (length > MAX_DOWNLOAD_BYTES) throw new Error("download exceeds 20 MiB");
@@ -147,7 +148,7 @@ async function main() {
   const workspace = process.env.GITHUB_WORKSPACE;
   if (!workspace) throw new Error("GITHUB_WORKSPACE is unavailable");
   const project = resolveProject(workspace, input("path", "."));
-  const cli = await installCli(input("cli-version", "0.4.0"));
+  const cli = await installCli(input("cli-version", "0.5.0"));
   if (booleanInput("dry-run")) {
     runCli(cli, ["build", "--json"], project, {});
     summary({}, true);

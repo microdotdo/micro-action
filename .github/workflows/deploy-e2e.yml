@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - id: deploy
-        uses: AndreBaltazar8/micro-action@27377b31cfc2737f9f0873d411fc4daf7dffab60 # v1.0.0
+        uses: ./
         with:
           path: test/fixture
           environment: production
