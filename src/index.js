@@ -65,7 +65,7 @@ async function installCli(version) {
   if (!expected || !/^[a-f0-9]{64}$/.test(expected)) {
     throw new Error(`micro CLI ${version} is not pinned by this Action release`);
   }
-  const url = `https://github.com/AndreBaltazar8/micro-cli/releases/download/v${version}/micro-linux-x86_64`;
+  const url = `https://github.com/microdotdo/micro-cli/releases/download/v${version}/micro-linux-x86_64`;
   const bytes = await boundedDownload(url);
   const actual = crypto.createHash("sha256").update(bytes).digest("hex");
   if (!crypto.timingSafeEqual(Buffer.from(actual), Buffer.from(expected))) {

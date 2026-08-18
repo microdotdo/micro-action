@@ -36,7 +36,7 @@ jobs:
     environment: production
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: AndreBaltazar8/micro-action@v1 # Pin a full commit SHA in production.
+      - uses: microdotdo/micro-action@v1 # Pin a full commit SHA in production.
         with:
           path: .
           environment: production
