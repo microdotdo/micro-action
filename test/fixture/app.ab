@@ -1,0 +1,13 @@
+import "abla/unsafe/memory"
+
+@export("micro_alloc")
+trusted fun microAllocate(length: u32): u32 =
+    microAllocateValue(length)
+
+trusted fun microAllocateValue(length: int): int =
+    if (length >= 0 && length <= 65536)
+        __ablaRuntimeAllocate(length + 1)
+    else 0
+
+@export("micro_handle")
+trusted fun microHandle(pointer: u32, length: u32): int = 0
