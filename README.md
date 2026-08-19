@@ -54,9 +54,12 @@ price or currency changes also fail closed unless
 `accept-price-changes: "true"` is explicitly set. Beginning real Stripe charges
 is a separate decision and requires `accept-live-products: "true"`.
 
-Action 1.3 installs the checksum-pinned Micro CLI 0.8.1. For projects with an
-`app.ab` server, it also builds the exact Abla compiler revision used to release
-that CLI inside a pinned Nix environment; static-only projects skip that work.
+Action 1.4 installs the checksum-pinned Micro CLI 0.10.2. A project can provide
+only static assets, commit or generate `.micro/build/app.wasm` with Rust or any
+compatible WebAssembly toolchain, or use an `app.ab` server. The Action uses a
+prebuilt server as-is; only an unbuilt Abla project downloads the checksum-pinned
+portable Abla toolchain. Put any Rust or custom build step immediately before this
+Action and write its final server to `.micro/build/app.wasm`.
 The Action completes `micro build` with GitHub deployment authority removed
 from the child environment, requests OIDC only afterward, and uploads that
 prebuilt bundle without compiling project code again. Its step summary

@@ -23,5 +23,10 @@ jobs:
       - name: Exercise the packaged Action and released CLI
         uses: ./
         with:
+          path: test/static-fixture
+          dry-run: "true"
+      - name: Exercise the portable Abla path
+        uses: ./
+        with:
           path: test/fixture
           dry-run: "true"
