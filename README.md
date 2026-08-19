@@ -54,7 +54,7 @@ price or currency changes also fail closed unless
 `accept-price-changes: "true"` is explicitly set. Beginning real Stripe charges
 is a separate decision and requires `accept-live-products: "true"`.
 
-Action 1.4 installs the checksum-pinned Micro CLI 0.10.2. A project can provide
+Action 1.4.1 installs the checksum-pinned Micro CLI 0.10.3. A project can provide
 only static assets, commit or generate `.micro/build/app.wasm` with Rust or any
 compatible WebAssembly toolchain, or use an `app.ab` server. The Action uses a
 prebuilt server as-is; only an unbuilt Abla project downloads the checksum-pinned

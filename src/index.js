@@ -14,6 +14,7 @@ const CLI_CHECKSUMS = {
   "0.8.0": "5aa9d98b2d3aa7e5e09b8cd38074ac0eddb002940ebbc0de9dc5d1a34c1c450c",
   "0.8.1": "105f7737d40272832e5d5a3437e4f1dee13b7435e40cec54a5c5d4caa7ece60f",
   "0.10.2": "5d8952aad96d48df6b3dcd818ff6127d52426275c40d94585f67e3cc07039c50",
+  "0.10.3": "0022cef17ad0f0365c166e65a58df98366572d6a361c055354e480af81a2a2a2",
 };
 
 function input(name, fallback = "") {
@@ -60,7 +61,7 @@ function resolveProject(workspace, requested) {
 }
 
 async function boundedDownload(url) {
-  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.4" } });
+  const response = await fetch(url, { redirect: "follow", headers: { "user-agent": "micro-action/1.4.1" } });
   if (!response.ok) throw new Error(`download failed with HTTP ${response.status}`);
   const length = Number(response.headers.get("content-length") || 0);
   if (length > MAX_DOWNLOAD_BYTES) throw new Error("download exceeds 20 MiB");
@@ -165,7 +166,7 @@ async function verifyDeployment(url, attempts = 5) {
       const response = await fetch(url, {
         method: "GET",
         redirect: "manual",
-        headers: { "user-agent": "micro-action/1.4 live-verification" },
+        headers: { "user-agent": "micro-action/1.4.1 live-verification" },
         signal: AbortSignal.timeout(10000),
       });
       if (response.status >= 200 && response.status < 500) {
@@ -201,7 +202,7 @@ async function main() {
   const workspace = process.env.GITHUB_WORKSPACE;
   if (!workspace) throw new Error("GITHUB_WORKSPACE is unavailable");
   const project = resolveProject(workspace, input("path", "."));
-  const cli = await installCli(input("cli-version", "0.10.2"));
+  const cli = await installCli(input("cli-version", "0.10.3"));
   runCli(cli, ["build", "--json"], project, projectBuildEnvironment());
   if (booleanInput("dry-run")) {
     summary({}, {}, true);

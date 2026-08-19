@@ -11,3 +11,6 @@ trusted fun microAllocateValue(length: int): int =
 
 @export("micro_handle")
 trusted fun microHandle(pointer: u32, length: u32): int = 0
+
+@export("micro_sign_extension_probe")
+fun signExtensionProbe(value: i8): int = value

@@ -10,11 +10,11 @@ const { booleanInput, input, parseDeployment, projectBuildEnvironment, resolvePr
 
 test("reads GitHub's exact hyphenated input environment names", () => {
   process.env["INPUT_DRY-RUN"] = "true";
-  process.env.INPUT_CLI_VERSION = "0.10.2";
+  process.env.INPUT_CLI_VERSION = "0.10.3";
   try {
     assert.equal(input("dry-run"), "true");
     assert.equal(booleanInput("dry-run"), true);
-    assert.equal(input("cli-version"), "0.10.2");
+    assert.equal(input("cli-version"), "0.10.3");
   } finally {
     delete process.env["INPUT_DRY-RUN"];
     delete process.env.INPUT_CLI_VERSION;

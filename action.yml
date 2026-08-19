@@ -16,7 +16,7 @@ inputs:
   cli-version:
     description: Compatible micro CLI release to install and verify.
     required: false
-    default: 0.10.2
+    default: 0.10.3
   dry-run:
     description: Build and validate locally without requesting OIDC or deploying.
     required: false
@@ -73,8 +73,8 @@ runs:
       if: steps.project.outputs.requires-abla == 'true'
       shell: bash
       env:
-        MICRO_TOOLCHAIN_VERSION: 0.10.2
-        MICRO_TOOLCHAIN_SHA256: 17ace8e60321315aa44d5df7ae78bd55e5e9e7fba1d5dd8667a39b730a80ec36
+        MICRO_TOOLCHAIN_VERSION: 0.10.3
+        MICRO_TOOLCHAIN_SHA256: 35f3cd50191a3c4db30c0bc8030d20b33e6750a911666ccc9f1e2743ee4b1832
       run: |
         archive="$RUNNER_TEMP/micro-toolchain-linux-x86_64.tar.gz"
         root="$RUNNER_TEMP/micro-toolchain"
@@ -84,7 +84,7 @@ runs:
         echo "$MICRO_TOOLCHAIN_SHA256  $archive" | sha256sum --check
         mkdir -p "$root"
         tar -xzf "$archive" -C "$root" --strip-components=1
-        test "$("$root/bin/ablac" --version)" = "ablac 0.2.6"
+        test "$("$root/bin/ablac" --version)" = "ablac 0.2.7"
     - id: deploy
       name: Build, deploy, and verify the Micro
       shell: bash
